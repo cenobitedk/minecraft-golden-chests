@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "enchanted=false,facing=north,type=single": { "model": "golden_chests:block/golden_chest" },
+    "enchanted=false,facing=south,type=single": { "model": "golden_chests:block/golden_chest", "y": 180 },
+    "enchanted=false,facing=west,type=single":  { "model": "golden_chests:block/golden_chest", "y": 270 },
+    "enchanted=false,facing=east,type=single":  { "model": "golden_chests:block/golden_chest", "y": 90 },
+    "enchanted=false,facing=north,type=left":   { "model": "golden_chests:block/golden_chest" },
+    "enchanted=false,facing=south,type=left":   { "model": "golden_chests:block/golden_chest", "y": 180 },
+    "enchanted=false,facing=west,type=left":    { "model": "golden_chests:block/golden_chest", "y": 270 },
+    "enchanted=false,facing=east,type=left":    { "model": "golden_chests:block/golden_chest", "y": 90 },
+    "enchanted=false,facing=north,type=right":  { "model": "golden_chests:block/golden_chest" },
+    "enchanted=false,facing=south,type=right":  { "model": "golden_chests:block/golden_chest", "y": 180 },
+    "enchanted=false,facing=west,type=right":   { "model": "golden_chests:block/golden_chest", "y": 270 },
+    "enchanted=false,facing=east,type=right":   { "model": "golden_chests:block/golden_chest", "y": 90 },
+    "enchanted=true,facing=north,type=single":  { "model": "golden_chests:block/golden_chest" },
+    "enchanted=true,facing=south,type=single":  { "model": "golden_chests:block/golden_chest", "y": 180 },
+    "enchanted=true,facing=west,type=single":   { "model": "golden_chests:block/golden_chest", "y": 270 },
+    "enchanted=true,facing=east,type=single":   { "model": "golden_chests:block/golden_chest", "y": 90 },
+    "enchanted=true,facing=north,type=left":    { "model": "golden_chests:block/golden_chest" },
+    "enchanted=true,facing=south,type=left":    { "model": "golden_chests:block/golden_chest", "y": 180 },
+    "enchanted=true,facing=west,type=left":     { "model": "golden_chests:block/golden_chest", "y": 270 },
+    "enchanted=true,facing=east,type=left":     { "model": "golden_chests:block/golden_chest", "y": 90 },
+    "enchanted=true,facing=north,type=right":   { "model": "golden_chests:block/golden_chest" },
+    "enchanted=true,facing=south,type=right":   { "model": "golden_chests:block/golden_chest", "y": 180 },
+    "enchanted=true,facing=west,type=right":    { "model": "golden_chests:block/golden_chest", "y": 270 },
+    "enchanted=true,facing=east,type=right":    { "model": "golden_chests:block/golden_chest", "y": 90 }
+  }
+}

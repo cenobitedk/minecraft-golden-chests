@@ -1,0 +1,36 @@
+architectury {
+    platformSetupLoomIde()
+    neoForge()
+}
+
+loom {
+    neoForge {}
+}
+
+dependencies {
+    neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
+
+    implementation project(":common")
+    include project(":common")
+}
+
+version = rootProject.mod_version
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
+}
+
+tasks.jar {
+    manifest {
+        attributes "Specification-Title": "golden_chests"
+        attributes "Specification-Vendor": "Jeppe Hasseriis"
+        attributes "Specification-Version": project.jar.archiveVersion
+        attributes "Implementation-Title": project.name
+        attributes "Implementation-Version": project.jar.archiveVersion
+        attributes "Implementation-Vendor": "Jeppe Hasseriis"
+        attributes "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+    }
+}

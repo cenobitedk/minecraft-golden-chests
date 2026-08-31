@@ -1,0 +1,35 @@
+# Source asset working files (Affinity Photo, reference PNGs, etc.)
+common/src/assets/
+
+# Gradle caches and build output
+.gradle/
+.architectury-transformer/
+build/
+out/
+*.class
+
+# JARs — exclude build outputs but keep wrapper and local mapping artifacts
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+!libs/*.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+
+# Loom run directories (generated per-subproject)
+run/
+runs/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

@@ -1,0 +1,37 @@
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/golden_chests.accesswidener")
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+
+    implementation project(":common")
+    include project(":common")
+}
+
+version = rootProject.mod_version
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.jar {
+    manifest {
+        attributes "Specification-Title": "golden_chests"
+        attributes "Specification-Vendor": "Jeppe Hasseriis"
+        attributes "Specification-Version": project.jar.archiveVersion
+        attributes "Implementation-Title": project.name
+        attributes "Implementation-Version": project.jar.archiveVersion
+        attributes "Implementation-Vendor": "Jeppe Hasseriis"
+        attributes "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+    }
+}

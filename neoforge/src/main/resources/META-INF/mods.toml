@@ -1,0 +1,19 @@
+modLoader="neoforgesl"
+loaderVersion="[26,)"
+license="MIT"
+issueTrackerURL="https://github.com/cenobitedk/minecraft-golden-chests/issues"
+
+[[mods]]
+modId="golden_chests"
+version="${version}"
+displayName="Golden Chests"
+description="Add golden chests to your Minecraft world"
+authors="Jeppe Hasseriis"
+displayURL="https://github.com/cenobitedk/minecraft-golden-chests"
+
+[[dependencies.golden_chests]]
+modId="minecraft"
+mandatory=true
+versionRange="[26.2,)"
+ordering="NONE"
+side="BOTH"

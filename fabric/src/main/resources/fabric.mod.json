@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "golden_chests",
+  "version": "${version}",
+  "name": "Golden Chests",
+  "description": "Add golden chests to your Minecraft world",
+  "authors": [
+    "Jeppe Hasseriis"
+  ],
+  "contact": {
+    "homepage": "https://github.com/cenobitedk/minecraft-golden-chests",
+    "sources": "https://github.com/cenobitedk/minecraft-golden-chests",
+    "issues": "https://github.com/cenobitedk/minecraft-golden-chests/issues"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.cenobitedk.mcmods.golden_chests.GoldenChests"
+    ],
+    "client": [
+      "com.cenobitedk.mcmods.golden_chests.GoldenChestsFabricClient"
+    ]
+  },
+  "mixins": [],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "26.2",
+    "java": ">=25"
+  }
+}

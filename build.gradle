@@ -1,0 +1,47 @@
+plugins {
+    id "architectury-plugin" version "3.5-SNAPSHOT"
+    id "dev.architectury.loom" version "1.17.487" apply false
+    id "dev.architectury.loom-no-remap" version "1.17.487" apply false
+}
+
+architectury {
+    minecraft = rootProject.minecraft_version
+}
+
+configure(subprojects) {
+    def noRemap = project.name == "neoforge"
+
+    if (noRemap) {
+        apply plugin: "dev.architectury.loom-no-remap"
+    } else {
+        apply plugin: "dev.architectury.loom"
+        dependencies {
+            mappings files("${rootProject.projectDir}/libs/identity-mappings-26.2.jar")
+        }
+    }
+    apply plugin: "architectury-plugin"
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    }
+
+    repositories {
+        maven { url "https://maven.fabricmc.net/" }
+        maven { url "https://maven.architectury.dev/" }
+        maven { url "https://maven.neoforged.net/releases/" }
+    }
+}
+
+allprojects {
+    apply plugin: "java"
+    apply plugin: "maven-publish"
+
+    java {
+        sourceCompatibility = JavaVersion.toVersion(rootProject.java_version)
+        targetCompatibility = JavaVersion.toVersion(rootProject.java_version)
+    }
+
+    repositories {
+        mavenCentral()
+    }
+}
