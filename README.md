@@ -36,7 +36,7 @@ Requires **Java 25**.
 ./gradlew :fabric:build :neoforge:build
 ```
 
-Release JARs are copied to `dist/` at the repository root, named `golden-chests-<minecraft>-<loader>-<mod version>.jar`, e.g. `golden-chests-26.2-fabric-1.0.0.jar`. The versions come from `gradle.properties`. `./gradlew clean` empties `dist/`. Architectury is used as a build tool only; players do not need a second mod installed.
+Release JARs are copied to `dist/` at the repository root, named `golden-chests-<minecraft>-<loader>-<mod version>.jar`, e.g. `golden-chests-26.2-fabric-1.0.0.jar`. The versions come from `gradle.properties`. On non-version-line branches (anything other than `26.2`, `26.3`, …), the short commit SHA is appended to the file name (e.g. `golden-chests-26.2-fabric-1.0.0-a1b2c3d.jar`); mod metadata still uses the plain `mod_version`. `./gradlew clean` empties `dist/`. Architectury is used as a build tool only; players do not need a second mod installed.
 
 ## Checks
 
