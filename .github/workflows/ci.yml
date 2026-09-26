@@ -86,7 +86,9 @@ jobs:
             done
           }
           check "fabric/build/libs/${prefix}-fabric-${version}.jar" fabric.mod.json
-          check "neoforge/build/libs/${prefix}-neoforge-${version}.jar" META-INF/neoforge.mods.toml
+          check "neoforge/build/libs/${prefix}-neoforge-${version}.jar" META-INF/neoforge.mods.toml \
+            com/cenobitedk/mcmods/golden_chests/blocks/GoldenChestBlock.class \
+            assets/golden_chests/lang/en_us.json
           ls -l fabric/build/libs neoforge/build/libs
       - name: Upload jars
         uses: actions/upload-artifact@v7
