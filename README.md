@@ -27,6 +27,16 @@ Requires **Java 25**.
 
 JARs are written to `fabric/build/libs/` and `neoforge/build/libs/`. Architectury is used as a build tool only; players do not need a second mod installed.
 
+## Checks
+
+Pull requests must pass CI before merging. Run the same checks locally with:
+
+```bash
+./gradlew spotlessCheck test build
+```
+
+If `spotlessCheck` fails, `./gradlew spotlessApply` reformats the code.
+
 ## License
 
 MIT
