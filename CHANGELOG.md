@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Updated to Minecraft 26.3 (Fabric Loader 0.19.5, Fabric API 0.161.0+26.3, NeoForge 26.3.0.22-beta).
 - Enchantment glint on the chest and its item is rendered with the 26.3 glint render type.
 - Block breaking animation on the chest uses the 26.3 crumbling overlay pipeline.
+- Release jars are named `golden-chests-<minecraft>-<loader>-<loader version>-<mod version>.jar` and collected in `dist/`.
 
 ### Fixed
 - NeoForge: the mod jar is now recognized and loaded. It was previously skipped as a Forge/legacy NeoForge mod, and its shared classes could not see Minecraft classes.
