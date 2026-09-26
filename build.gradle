@@ -45,3 +45,32 @@ allprojects {
         mavenCentral()
     }
 }
+
+def distDir = layout.projectDirectory.dir("dist")
+
+configure(subprojects.findAll { it.name in ["fabric", "neoforge"] }) {
+    def loaderVersion = project.name == "fabric" ? rootProject.fabric_loader_version : rootProject.neoforge_version
+
+    // golden-chests-<mc>-<loader>-<loader version>-<mod version>.jar
+    base {
+        archivesName = "${rootProject.archives_base_name}-${rootProject.minecraft_version}-${project.name}-${loaderVersion}"
+    }
+
+    // Fabric's distributable jar is produced by remapJar; NeoForge (no-remap) ships the plain jar.
+    def releaseJar = tasks.names.contains("remapJar") ? tasks.named("remapJar") : tasks.named("jar")
+
+    def copyToDist = tasks.register("copyJarToDist", Copy) {
+        group = "build"
+        description = "Copies the release jar into the root dist/ folder."
+        from releaseJar
+        into distDir
+    }
+
+    tasks.named("build") {
+        finalizedBy copyToDist
+    }
+}
+
+tasks.named("clean") {
+    delete distDir
+}
