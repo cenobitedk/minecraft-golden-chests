@@ -33,12 +33,12 @@ public class GoldenChestRenderer implements BlockEntityRenderer<GoldenChestBlock
             new ModelLayerLocation(Identifier.fromNamespaceAndPath("golden_chests", "golden_chest_right"), "main");
 
     // Sprites — CHEST_MAPPER adds the "entity/chest/" prefix automatically
-    private static final SpriteId SPRITE_SINGLE = Sheets.CHEST_MAPPER
-            .apply(Identifier.fromNamespaceAndPath("golden_chests", "golden"));
-    private static final SpriteId SPRITE_LEFT = Sheets.CHEST_MAPPER
-            .apply(Identifier.fromNamespaceAndPath("golden_chests", "golden_left"));
-    private static final SpriteId SPRITE_RIGHT = Sheets.CHEST_MAPPER
-            .apply(Identifier.fromNamespaceAndPath("golden_chests", "golden_right"));
+    private static final SpriteId SPRITE_SINGLE =
+            Sheets.CHEST_MAPPER.apply(Identifier.fromNamespaceAndPath("golden_chests", "golden"));
+    private static final SpriteId SPRITE_LEFT =
+            Sheets.CHEST_MAPPER.apply(Identifier.fromNamespaceAndPath("golden_chests", "golden_left"));
+    private static final SpriteId SPRITE_RIGHT =
+            Sheets.CHEST_MAPPER.apply(Identifier.fromNamespaceAndPath("golden_chests", "golden_right"));
 
     private final MultiblockChestResources<ChestModel> models;
     private final SpriteGetter sprites;
@@ -47,8 +47,7 @@ public class GoldenChestRenderer implements BlockEntityRenderer<GoldenChestBlock
         this.models = new MultiblockChestResources<>(
                 new ChestModel(context.bakeLayer(LAYER_SINGLE)),
                 new ChestModel(context.bakeLayer(LAYER_DOUBLE_LEFT)),
-                new ChestModel(context.bakeLayer(LAYER_DOUBLE_RIGHT))
-        );
+                new ChestModel(context.bakeLayer(LAYER_DOUBLE_RIGHT)));
         this.sprites = context.sprites();
     }
 
@@ -58,10 +57,12 @@ public class GoldenChestRenderer implements BlockEntityRenderer<GoldenChestBlock
     }
 
     @Override
-    public void extractRenderState(GoldenChestBlockEntity be, GoldenChestRenderState state,
-                                   float partialTick,
-                                   net.minecraft.world.phys.Vec3 cameraPos,
-                                   net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay crumbling) {
+    public void extractRenderState(
+            GoldenChestBlockEntity be,
+            GoldenChestRenderState state,
+            float partialTick,
+            net.minecraft.world.phys.Vec3 cameraPos,
+            net.minecraft.client.renderer.feature.ModelFeatureRenderer.CrumblingOverlay crumbling) {
         BlockEntityRenderState.extractBase(be, state, crumbling);
         state.openness = be.getOpenness(partialTick);
         state.enchanted = be.isEnchanted();
@@ -74,8 +75,11 @@ public class GoldenChestRenderer implements BlockEntityRenderer<GoldenChestBlock
     }
 
     @Override
-    public void submit(GoldenChestRenderState state, PoseStack poseStack,
-                       SubmitNodeCollector collector, CameraRenderState cameraState) {
+    public void submit(
+            GoldenChestRenderState state,
+            PoseStack poseStack,
+            SubmitNodeCollector collector,
+            CameraRenderState cameraState) {
         poseStack.pushPose();
         poseStack.mulPose(ChestRenderer.modelTransformation(state.facing));
 
@@ -90,21 +94,37 @@ public class GoldenChestRenderer implements BlockEntityRenderer<GoldenChestBlock
         };
 
         model.setupAnim(lidAngle);
-        collector.submitModel(model, lidAngle, poseStack,
-                state.lightCoords, OverlayTexture.NO_OVERLAY, -1,
-                sprite, sprites, 0);
+        collector.submitModel(
+                model, lidAngle, poseStack, state.lightCoords, OverlayTexture.NO_OVERLAY, -1, sprite, sprites, 0);
 
         // Separate glint pass (depth-equal) so the cutout holes in the double-chest textures stay transparent
         if (state.enchanted) {
-            collector.order(1).submitModel(model, lidAngle, poseStack,
-                    RenderTypes.patternedShieldGlint(), state.lightCoords, OverlayTexture.NO_OVERLAY, -1,
-                    sprites.get(sprite), 0);
+            collector
+                    .order(1)
+                    .submitModel(
+                            model,
+                            lidAngle,
+                            poseStack,
+                            RenderTypes.patternedShieldGlint(),
+                            state.lightCoords,
+                            OverlayTexture.NO_OVERLAY,
+                            -1,
+                            sprites.get(sprite),
+                            0);
         }
 
         if (state.breakProgress != null) {
-            collector.order(1).submitCrumblingOverlay(model, lidAngle, poseStack,
-                    sprite.renderType(model.renderType()), state.lightCoords, OverlayTexture.NO_OVERLAY, -1,
-                    state.breakProgress);
+            collector
+                    .order(1)
+                    .submitCrumblingOverlay(
+                            model,
+                            lidAngle,
+                            poseStack,
+                            sprite.renderType(model.renderType()),
+                            state.lightCoords,
+                            OverlayTexture.NO_OVERLAY,
+                            -1,
+                            state.breakProgress);
         }
 
         poseStack.popPose();

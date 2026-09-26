@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: "26.2"
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: gradle
+    directory: /
+    target-branch: "26.2"
+    schedule:
+      interval: weekly
+    # Minecraft, loader and Loom versions are tied to the game version of this branch, so only tooling is bumped.
+    allow:
+      - dependency-name: "com.diffplug.spotless*"
+      - dependency-name: "org.junit*"
+    groups:
+      build-tooling:
+        patterns:
+          - "com.diffplug.spotless*"
+          - "org.junit*"

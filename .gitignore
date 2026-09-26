@@ -5,6 +5,7 @@ common/src/assets/
 .gradle/
 .architectury-transformer/
 build/
+dist/
 out/
 *.class
 

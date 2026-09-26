@@ -2,6 +2,7 @@ package com.cenobitedk.mcmods.golden_chests.blocks;
 
 import com.cenobitedk.mcmods.golden_chests.blockentity.GoldenChestBlockEntity;
 import com.cenobitedk.mcmods.golden_chests.storage.SharedChestData;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -15,10 +16,10 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.ContainerUser;
-import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -48,8 +49,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.UUID;
-
 public class GoldenChestBlock extends BaseEntityBlock {
 
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
@@ -64,7 +63,8 @@ public class GoldenChestBlock extends BaseEntityBlock {
 
     public GoldenChestBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any()
+        registerDefaultState(stateDefinition
+                .any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(TYPE, ChestType.SINGLE)
                 .setValue(ENCHANTED, false));
@@ -97,7 +97,8 @@ public class GoldenChestBlock extends BaseEntityBlock {
         BlockState cwState = level.getBlockState(cwPos);
         if (isPartnerChest(cwState, facing, enchanted)) {
             // Update the clockwise neighbor to RIGHT, we become LEFT
-            level.setBlock(cwPos, cwState.setValue(TYPE, ChestType.RIGHT), Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS);
+            level.setBlock(
+                    cwPos, cwState.setValue(TYPE, ChestType.RIGHT), Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS);
             return ChestType.LEFT;
         }
         // Check counter-clockwise neighbor (becomes RIGHT if partner found there)
@@ -105,7 +106,8 @@ public class GoldenChestBlock extends BaseEntityBlock {
         BlockState ccwState = level.getBlockState(ccwPos);
         if (isPartnerChest(ccwState, facing, enchanted)) {
             // Update the counter-clockwise neighbor to LEFT, we become RIGHT
-            level.setBlock(ccwPos, ccwState.setValue(TYPE, ChestType.LEFT), Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS);
+            level.setBlock(
+                    ccwPos, ccwState.setValue(TYPE, ChestType.LEFT), Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS);
             return ChestType.RIGHT;
         }
         return ChestType.SINGLE;
@@ -121,15 +123,19 @@ public class GoldenChestBlock extends BaseEntityBlock {
     /** Returns the direction of the partner half, relative to this block's position. */
     public static Direction getConnectedDirection(BlockState state) {
         Direction facing = state.getValue(FACING);
-        return state.getValue(TYPE) == ChestType.LEFT
-                ? facing.getClockWise()
-                : facing.getCounterClockWise();
+        return state.getValue(TYPE) == ChestType.LEFT ? facing.getClockWise() : facing.getCounterClockWise();
     }
 
     @Override
-    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks,
-                                     BlockPos pos, Direction direction, BlockPos neighborPos,
-                                     BlockState neighborState, net.minecraft.util.RandomSource random) {
+    protected BlockState updateShape(
+            BlockState state,
+            LevelReader level,
+            ScheduledTickAccess ticks,
+            BlockPos pos,
+            Direction direction,
+            BlockPos neighborPos,
+            BlockState neighborState,
+            net.minecraft.util.RandomSource random) {
         Direction facing = state.getValue(FACING);
         ChestType currentType = state.getValue(TYPE);
         boolean thisEnchanted = state.getValue(ENCHANTED);
@@ -170,9 +176,11 @@ public class GoldenChestBlock extends BaseEntityBlock {
     }
 
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
+            Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide()
-                ? createTickerHelper(type,
+                ? createTickerHelper(
+                        type,
                         com.cenobitedk.mcmods.golden_chests.registry.ModBlockEntityTypes.GOLDEN_CHEST.get(),
                         GoldenChestBlockEntity::lidAnimateTick)
                 : null;
@@ -234,9 +242,9 @@ public class GoldenChestBlock extends BaseEntityBlock {
 
                 if (!chest.isEnchanted() || !neighbour.isEnchanted()) continue; // both must be enchanted
 
-                UUID linkId = neighbour.getLinkId() != null ? neighbour.getLinkId()
-                        : chest.getLinkId() != null ? chest.getLinkId()
-                        : UUID.randomUUID();
+                UUID linkId = neighbour.getLinkId() != null
+                        ? neighbour.getLinkId()
+                        : chest.getLinkId() != null ? chest.getLinkId() : UUID.randomUUID();
 
                 int sharedLevel = Math.max(chest.getUnbreakingLevel(), neighbour.getUnbreakingLevel());
                 chest.setLinkId(linkId);
@@ -255,8 +263,8 @@ public class GoldenChestBlock extends BaseEntityBlock {
     // --- Opening the chest ---
 
     @Override
-    public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
-                                            Player player, BlockHitResult hit) {
+    public InteractionResult useWithoutItem(
+            BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         if (!(level.getBlockEntity(pos) instanceof GoldenChestBlockEntity chest)) return InteractionResult.CONSUME;
 
@@ -293,17 +301,64 @@ public class GoldenChestBlock extends BaseEntityBlock {
                 Container combined = new Container() {
                     final net.minecraft.world.SimpleContainer l = left.getEffectiveContainer();
                     final net.minecraft.world.SimpleContainer r = right.getEffectiveContainer();
-                    @Override public int getContainerSize() { return 54; }
-                    @Override public boolean isEmpty() { return l.isEmpty() && r.isEmpty(); }
-                    @Override public net.minecraft.world.item.ItemStack getItem(int s) { return s < 27 ? l.getItem(s) : r.getItem(s - 27); }
-                    @Override public net.minecraft.world.item.ItemStack removeItem(int s, int c) { return s < 27 ? l.removeItem(s, c) : r.removeItem(s - 27, c); }
-                    @Override public net.minecraft.world.item.ItemStack removeItemNoUpdate(int s) { return s < 27 ? l.removeItemNoUpdate(s) : r.removeItemNoUpdate(s - 27); }
-                    @Override public void setItem(int s, net.minecraft.world.item.ItemStack st) { if (s < 27) l.setItem(s, st); else r.setItem(s - 27, st); }
-                    @Override public void setChanged() { l.setChanged(); r.setChanged(); }
-                    @Override public boolean stillValid(Player p) { return true; }
-                    @Override public void clearContent() { l.clearContent(); r.clearContent(); }
-                    @Override public void startOpen(ContainerUser u) { left.startOpen(u); }
-                    @Override public void stopOpen(ContainerUser u)  { left.stopOpen(u); }
+
+                    @Override
+                    public int getContainerSize() {
+                        return 54;
+                    }
+
+                    @Override
+                    public boolean isEmpty() {
+                        return l.isEmpty() && r.isEmpty();
+                    }
+
+                    @Override
+                    public net.minecraft.world.item.ItemStack getItem(int s) {
+                        return s < 27 ? l.getItem(s) : r.getItem(s - 27);
+                    }
+
+                    @Override
+                    public net.minecraft.world.item.ItemStack removeItem(int s, int c) {
+                        return s < 27 ? l.removeItem(s, c) : r.removeItem(s - 27, c);
+                    }
+
+                    @Override
+                    public net.minecraft.world.item.ItemStack removeItemNoUpdate(int s) {
+                        return s < 27 ? l.removeItemNoUpdate(s) : r.removeItemNoUpdate(s - 27);
+                    }
+
+                    @Override
+                    public void setItem(int s, net.minecraft.world.item.ItemStack st) {
+                        if (s < 27) l.setItem(s, st);
+                        else r.setItem(s - 27, st);
+                    }
+
+                    @Override
+                    public void setChanged() {
+                        l.setChanged();
+                        r.setChanged();
+                    }
+
+                    @Override
+                    public boolean stillValid(Player p) {
+                        return true;
+                    }
+
+                    @Override
+                    public void clearContent() {
+                        l.clearContent();
+                        r.clearContent();
+                    }
+
+                    @Override
+                    public void startOpen(ContainerUser u) {
+                        left.startOpen(u);
+                    }
+
+                    @Override
+                    public void stopOpen(ContainerUser u) {
+                        left.stopOpen(u);
+                    }
                 };
                 return new ChestMenu(MenuType.GENERIC_9x6, id, inv, combined, 6);
             }
@@ -320,8 +375,8 @@ public class GoldenChestBlock extends BaseEntityBlock {
     // --- Breaking ---
 
     @Override
-    public void playerDestroy(ServerLevel level, ServerPlayer player, BlockPos pos, BlockState state,
-                              BlockEntity be, ItemStack tool) {
+    public void playerDestroy(
+            ServerLevel level, ServerPlayer player, BlockPos pos, BlockState state, BlockEntity be, ItemStack tool) {
         player.awardStat(Stats.BLOCK_MINED.get(this));
         player.causeFoodExhaustion(0.005F);
 
@@ -351,7 +406,8 @@ public class GoldenChestBlock extends BaseEntityBlock {
         // decremented the ref, so hasActiveRefs==true means another chest is still linked.
         // Without this, a mined enchanted chest (no partner) would carry a dead link_id
         // and fail to stack with freshly enchanted chests that have no BLOCK_ENTITY_DATA.
-        boolean partnerExists = chest.isLinked() && level instanceof ServerLevel sl
+        boolean partnerExists = chest.isLinked()
+                && level instanceof ServerLevel sl
                 && SharedChestData.get(sl).hasActiveRefs(chest.getLinkId());
 
         if (partnerExists) {
