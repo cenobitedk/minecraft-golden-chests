@@ -27,6 +27,16 @@ Requires **Java 25**.
 
 Release JARs are copied to `dist/` at the repository root, named `golden-chests-<minecraft>-<loader>-<loader version>-<mod version>.jar`, e.g. `golden-chests-26.2-fabric-0.19.3-1.0.0.jar`. The versions come from `gradle.properties`. `./gradlew clean` empties `dist/`. Architectury is used as a build tool only; players do not need a second mod installed.
 
+## Checks
+
+Pull requests must pass CI before merging. Run the same checks locally with:
+
+```bash
+./gradlew spotlessCheck test build
+```
+
+If `spotlessCheck` fails, `./gradlew spotlessApply` reformats the code.
+
 ## License
 
 MIT

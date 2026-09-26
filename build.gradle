@@ -2,6 +2,7 @@ plugins {
     id "architectury-plugin" version "3.5-SNAPSHOT"
     id "dev.architectury.loom" version "1.17.487" apply false
     id "dev.architectury.loom-no-remap" version "1.17.487" apply false
+    id "com.diffplug.spotless" version "8.10.3" apply false
 }
 
 architectury {
@@ -23,6 +24,23 @@ configure(subprojects) {
 
     dependencies {
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+
+        testImplementation platform("org.junit:junit-bom:6.1.3")
+        testImplementation "org.junit.jupiter:junit-jupiter"
+        testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    }
+
+    tasks.named("test") {
+        useJUnitPlatform()
+        systemProperty "golden_chests.root_dir", rootProject.projectDir.absolutePath
+        systemProperty "golden_chests.resources_dir", sourceSets.main.output.resourcesDir.absolutePath
+        ["mod_version", "minecraft_version", "java_version", "fabric_loader_version"].each {
+            systemProperty "golden_chests.${it}", rootProject.property(it)
+        }
+        testLogging {
+            events "failed", "skipped"
+            exceptionFormat "full"
+        }
     }
 
     repositories {
@@ -35,6 +53,23 @@ configure(subprojects) {
 allprojects {
     apply plugin: "java"
     apply plugin: "maven-publish"
+    apply plugin: "com.diffplug.spotless"
+
+    spotless {
+        java {
+            target "src/*/java/**/*.java"
+            palantirJavaFormat("2.99.0")
+            removeUnusedImports()
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+        groovyGradle {
+            target "*.gradle"
+            leadingTabsToSpaces(4)
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+    }
 
     java {
         sourceCompatibility = JavaVersion.toVersion(rootProject.java_version)

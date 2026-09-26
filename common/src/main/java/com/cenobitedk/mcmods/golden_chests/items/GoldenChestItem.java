@@ -1,6 +1,7 @@
 package com.cenobitedk.mcmods.golden_chests.items;
 
 import com.cenobitedk.mcmods.golden_chests.storage.SharedChestData;
+import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -11,8 +12,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-
-import java.util.UUID;
 
 /**
  * Custom BlockItem that forces enchantment glint when the chest item carries
@@ -30,10 +29,12 @@ public class GoldenChestItem extends BlockItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context,
-                                net.minecraft.world.item.component.TooltipDisplay display,
-                                java.util.function.Consumer<Component> tooltip,
-                                net.minecraft.world.item.TooltipFlag flag) {
+    public void appendHoverText(
+            ItemStack stack,
+            net.minecraft.world.item.Item.TooltipContext context,
+            net.minecraft.world.item.component.TooltipDisplay display,
+            java.util.function.Consumer<Component> tooltip,
+            net.minecraft.world.item.TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltip, flag);
         var beData = stack.get(DataComponents.BLOCK_ENTITY_DATA);
         if (beData != null && !beData.getUnsafe().getStringOr("link_id", "").isEmpty()) {

@@ -3,15 +3,15 @@ package com.cenobitedk.mcmods.golden_chests;
 import com.cenobitedk.mcmods.golden_chests.blockentity.GoldenChestBlockEntity;
 import com.cenobitedk.mcmods.golden_chests.blocks.GoldenChestBlock;
 import com.cenobitedk.mcmods.golden_chests.client.GoldenChestRenderer;
+import com.cenobitedk.mcmods.golden_chests.items.GoldenChestItem;
 import com.cenobitedk.mcmods.golden_chests.registry.ModBlockEntityTypes;
 import com.cenobitedk.mcmods.golden_chests.registry.ModBlocks;
 import com.cenobitedk.mcmods.golden_chests.registry.ModItems;
+import java.util.Set;
 import net.minecraft.client.model.object.chest.ChestModel;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import com.cenobitedk.mcmods.golden_chests.items.GoldenChestItem;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantable;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.api.distmarker.Dist;
@@ -26,15 +26,11 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import java.util.Set;
-
 @Mod(GoldenChestsMod.MOD_ID)
 public class GoldenChests {
 
-    private static final DeferredRegister.Blocks BLOCKS =
-            DeferredRegister.createBlocks(GoldenChestsMod.MOD_ID);
-    private static final DeferredRegister.Items ITEMS =
-            DeferredRegister.createItems(GoldenChestsMod.MOD_ID);
+    private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(GoldenChestsMod.MOD_ID);
+    private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(GoldenChestsMod.MOD_ID);
     private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, GoldenChestsMod.MOD_ID);
 
@@ -42,14 +38,18 @@ public class GoldenChests {
             BLOCKS.registerBlock("golden_chest", GoldenChestBlock::new);
 
     private static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GoldenChestBlockEntity>> GOLDEN_CHEST_BE =
-            BLOCK_ENTITY_TYPES.register("golden_chest", () ->
-                    new BlockEntityType<>(GoldenChestBlockEntity::new, Set.of(GOLDEN_CHEST_BLOCK.get())));
+            BLOCK_ENTITY_TYPES.register(
+                    "golden_chest",
+                    () -> new BlockEntityType<>(GoldenChestBlockEntity::new, Set.of(GOLDEN_CHEST_BLOCK.get())));
 
-    private static final DeferredItem<GoldenChestItem> GOLDEN_CHEST_ITEM =
-            ITEMS.registerItem("golden_chest",
-                    p -> new GoldenChestItem(GOLDEN_CHEST_BLOCK.get(),
-                            p.component(DataComponents.ENCHANTABLE, new Enchantable(22))
-                             .component(DataComponents.ENCHANTMENTS, net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY)));
+    private static final DeferredItem<GoldenChestItem> GOLDEN_CHEST_ITEM = ITEMS.registerItem(
+            "golden_chest",
+            p -> new GoldenChestItem(
+                    GOLDEN_CHEST_BLOCK.get(),
+                    p.component(DataComponents.ENCHANTABLE, new Enchantable(22))
+                            .component(
+                                    DataComponents.ENCHANTMENTS,
+                                    net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY)));
 
     public GoldenChests(IEventBus modEventBus) {
         BLOCKS.register(modEventBus);
@@ -75,15 +75,13 @@ public class GoldenChests {
         public static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
             event.registerLayerDefinition(GoldenChestRenderer.LAYER_SINGLE, ChestModel::createSingleBodyLayer);
             event.registerLayerDefinition(GoldenChestRenderer.LAYER_DOUBLE_LEFT, ChestModel::createDoubleBodyLeftLayer);
-            event.registerLayerDefinition(GoldenChestRenderer.LAYER_DOUBLE_RIGHT, ChestModel::createDoubleBodyRightLayer);
+            event.registerLayerDefinition(
+                    GoldenChestRenderer.LAYER_DOUBLE_RIGHT, ChestModel::createDoubleBodyRightLayer);
         }
 
         @SubscribeEvent
         public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-            event.registerBlockEntityRenderer(
-                    ModBlockEntityTypes.GOLDEN_CHEST.get(),
-                    GoldenChestRenderer::new
-            );
+            event.registerBlockEntityRenderer(ModBlockEntityTypes.GOLDEN_CHEST.get(), GoldenChestRenderer::new);
         }
     }
 }
