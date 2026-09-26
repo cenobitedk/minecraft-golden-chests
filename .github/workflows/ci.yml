@@ -75,7 +75,9 @@ jobs:
       - name: Verify jars
         run: |
           set -euo pipefail
-          version=$(sed -n 's/^mod_version=//p' gradle.properties)
+          prop() { sed -n "s/^$1=//p" gradle.properties; }
+          base="$(prop archives_base_name)-$(prop minecraft_version)"
+          version=$(prop mod_version)
           check() {
             local jar="$1"; shift
             test -f "$jar" || { echo "::error::Missing $jar"; exit 1; }
@@ -83,8 +85,8 @@ jobs:
               unzip -l "$jar" "$entry" > /dev/null || { echo "::error::$jar is missing $entry"; exit 1; }
             done
           }
-          check "fabric/build/libs/fabric-${version}.jar" fabric.mod.json
-          check "neoforge/build/libs/neoforge-${version}.jar" META-INF/neoforge.mods.toml
+          check "fabric/build/libs/${base}-fabric-$(prop fabric_loader_version)-${version}.jar" fabric.mod.json
+          check "neoforge/build/libs/${base}-neoforge-$(prop neoforge_version)-${version}.jar" META-INF/neoforge.mods.toml
           ls -l fabric/build/libs neoforge/build/libs
       - name: Upload jars
         uses: actions/upload-artifact@v7
