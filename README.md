@@ -1,23 +1,32 @@
 # Golden Chests
 
-A Minecraft **26.2** mod for Fabric and NeoForge.
+A Minecraft mod for Fabric and NeoForge.
 
-Craft a golden chest, enchant it with Unbreaking, and link a pair so they share one inventory — even after you mine them and place them somewhere else.
+Craft a **Golden Chest**, enchant it with Unbreaking, and link a pair so they share one inventory — even after you mine them and place them somewhere else.
 
-Development for this Minecraft version lives on the `26.2` branch. Fabric and NeoForge are built from the same branch.
+<p align="center">
+  <img src="/docs/assets/golden_chest_isometric_transparent.png" alt="Golden Chest icon" width="300px">
+</p>
 
 ## Features
 
 - Craft with 8 gold ingots surrounding a chest
 - Enchant with Unbreaking (enchanting table or anvil)
-- Two unenchanted chests placed together merge into a vanilla-style 54-slot double chest
-- Two enchanted chests placed together look like a double chest and share a 27-slot linked inventory
+- Two _unenchanted_ chests placed together merge into a vanilla-style 54-slot double chest
+- Two _enchanted_ chests placed together look like a double chest and share a 27-slot linked inventory
 - Mixed enchanted/unenchanted neighbors do not merge
 - Linked inventory is kept in world save data, so the pair reconnects when either chest is placed back down
-- Mining both chests of a linked pair breaks the link: the shared inventory drops at the last chest mined, and both items become plain enchanted chests again
-- Only chests in loaded chunks count as a live link. If one chest of a pair is in an unloaded chunk and you mine the other, the link is treated as broken: the shared inventory drops where you mined, and the far chest opens to an empty inventory when its chunk loads again
+- Chests that still have an active partner show a **Linked** tooltip
 - Grindstone removes the enchantment and breaks the link
-- Items that still have an active partner show a **Linked** tooltip
+- Mining both chests of a linked pair breaks the link: the shared inventory drops at the last chest mined, and both items become plain enchanted chests again
+
+### Notes
+
+- Only chests in loaded chunks count as a live link. If one chest of a pair is in an unloaded chunk and you mine the other, the link is treated as broken: the shared inventory drops where you mined, and the far chest opens to an empty inventory when its chunk loads again
+
+## Requirements
+
+- Fabric API is needed
 
 ## Building
 
