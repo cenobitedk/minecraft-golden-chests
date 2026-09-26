@@ -5,15 +5,24 @@ architectury {
 
 loom {
     neoForge {}
+
+    mods {
+        main {
+            sourceSet sourceSets.main
+            sourceSet project(":common").sourceSets.main
+        }
+    }
 }
 
 configurations {
+    // Dev runs load common from its source set via loom.mods; a second copy on the runtime classpath
+    // would split the mod's packages across two modules.
     common {
         canBeResolved = true
         canBeConsumed = false
     }
-    implementation.extendsFrom common
-    developmentNeoForge.extendsFrom common
+    compileOnly.extendsFrom common
+    testImplementation.extendsFrom common
 
     // FML loads jar-in-jar libraries outside the mod's module, so common must be merged into the mod jar itself.
     bundle {
