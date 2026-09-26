@@ -78,6 +78,14 @@ jobs:
           prop() { sed -n "s/^$1=//p" gradle.properties; }
           prefix="$(prop archives_base_name)-$(prop minecraft_version)"
           version=$(prop mod_version)
+          ref="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
+          if [[ "$ref" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            jar_version="$version"
+          elif [[ -n "${GITHUB_SHA:-}" ]]; then
+            jar_version="${version}-${GITHUB_SHA:0:7}"
+          else
+            jar_version="${version}-$(git rev-parse --short HEAD)"
+          fi
           check() {
             local jar="$1"; shift
             test -f "$jar" || { echo "::error::Missing $jar"; exit 1; }
@@ -85,8 +93,8 @@ jobs:
               unzip -l "$jar" "$entry" > /dev/null || { echo "::error::$jar is missing $entry"; exit 1; }
             done
           }
-          check "fabric/build/libs/${prefix}-fabric-${version}.jar" fabric.mod.json
-          check "neoforge/build/libs/${prefix}-neoforge-${version}.jar" META-INF/neoforge.mods.toml \
+          check "fabric/build/libs/${prefix}-fabric-${jar_version}.jar" fabric.mod.json
+          check "neoforge/build/libs/${prefix}-neoforge-${jar_version}.jar" META-INF/neoforge.mods.toml \
             com/cenobitedk/mcmods/golden_chests/blocks/GoldenChestBlock.class \
             assets/golden_chests/lang/en_us.json
           ls -l fabric/build/libs neoforge/build/libs
