@@ -84,11 +84,9 @@ allprojects {
 def distDir = layout.projectDirectory.dir("dist")
 
 configure(subprojects.findAll { it.name in ["fabric", "neoforge"] }) {
-    def loaderVersion = project.name == "fabric" ? rootProject.fabric_loader_version : rootProject.neoforge_version
-
-    // golden-chests-<mc>-<loader>-<loader version>-<mod version>.jar
+    // golden-chests-<mc>-<loader>-<mod version>.jar
     base {
-        archivesName = "${rootProject.archives_base_name}-${rootProject.minecraft_version}-${project.name}-${loaderVersion}"
+        archivesName = "${rootProject.archives_base_name}-${rootProject.minecraft_version}-${project.name}"
     }
 
     // Fabric's distributable jar is produced by remapJar; NeoForge (no-remap) ships the plain jar.
