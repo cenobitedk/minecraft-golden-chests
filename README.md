@@ -25,7 +25,7 @@ Requires **Java 25**.
 ./gradlew :fabric:build :neoforge:build
 ```
 
-JARs are written to `fabric/build/libs/` and `neoforge/build/libs/`. Architectury is used as a build tool only; players do not need a second mod installed.
+Release JARs are copied to `dist/` at the repository root, named `golden-chests-<minecraft>-<loader>-<loader version>-<mod version>.jar`, e.g. `golden-chests-26.2-fabric-0.19.3-1.0.0.jar`. The versions come from `gradle.properties`. `./gradlew clean` empties `dist/`. Architectury is used as a build tool only; players do not need a second mod installed.
 
 ## License
 
