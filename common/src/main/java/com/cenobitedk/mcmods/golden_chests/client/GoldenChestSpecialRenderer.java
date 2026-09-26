@@ -39,11 +39,11 @@ public class GoldenChestSpecialRenderer implements NoDataSpecialModelRenderer {
                        int light, int overlay, boolean foil, int seed) {
         model.setupAnim(0f);
         collector.submitModel(model, 0f, poseStack,
-                light, overlay, -1, SPRITE, sprites, seed, null);
+                light, overlay, -1, SPRITE, sprites, seed);
         if (foil) {
             // ChestSpecialRenderer ignores foil — we fix that here with a second glint pass
-            collector.submitModel(model, 0f, poseStack,
-                    RenderTypes.glint(), light, overlay, -1, null);
+            collector.order(1).submitModel(model, 0f, poseStack,
+                    RenderTypes.patternedShieldGlint(), light, overlay, -1, sprites.get(SPRITE), 0);
         }
     }
 

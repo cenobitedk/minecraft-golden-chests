@@ -2,12 +2,12 @@ package com.cenobitedk.mcmods.golden_chests.blocks;
 
 import com.cenobitedk.mcmods.golden_chests.blockentity.GoldenChestBlockEntity;
 import com.cenobitedk.mcmods.golden_chests.storage.SharedChestData;
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.Container;
@@ -51,8 +51,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.UUID;
 
 public class GoldenChestBlock extends BaseEntityBlock {
-
-    public static final MapCodec<GoldenChestBlock> CODEC = MapCodec.unit(GoldenChestBlock::new);
 
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
     public static final EnumProperty<ChestType> TYPE = BlockStateProperties.CHEST_TYPE;
@@ -157,11 +155,6 @@ public class GoldenChestBlock extends BaseEntityBlock {
             }
         }
         return state;
-    }
-
-    @Override
-    protected MapCodec<GoldenChestBlock> codec() {
-        return CODEC;
     }
 
     @Override
@@ -327,21 +320,21 @@ public class GoldenChestBlock extends BaseEntityBlock {
     // --- Breaking ---
 
     @Override
-    public void playerDestroy(Level level, Player player, BlockPos pos, BlockState state,
+    public void playerDestroy(ServerLevel level, ServerPlayer player, BlockPos pos, BlockState state,
                               BlockEntity be, ItemStack tool) {
         player.awardStat(Stats.BLOCK_MINED.get(this));
         player.causeFoodExhaustion(0.005F);
 
-        if (!level.isClientSide() && be instanceof GoldenChestBlockEntity chest) {
+        if (be instanceof GoldenChestBlockEntity chest) {
             if (!chest.isLinked()) {
                 Containers.dropContents(level, pos, chest.getEffectiveContainer());
-            } else if (level instanceof ServerLevel sl) {
+            } else {
                 UUID linkId = chest.getLinkId();
-                SharedChestData data = SharedChestData.get(sl);
+                SharedChestData data = SharedChestData.get(level);
                 // By the time playerDestroy runs, setRemoved has already decremented the ref.
                 // If activeRefs is now 0, this was the last loaded linked chest.
                 if (!data.hasActiveRefs(linkId)) {
-                    Containers.dropContents(sl, pos, data.getOrCreate(linkId));
+                    Containers.dropContents(level, pos, data.getOrCreate(linkId));
                     data.remove(linkId);
                 }
             }
