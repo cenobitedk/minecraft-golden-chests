@@ -14,6 +14,7 @@ Development for this Minecraft version lives on the `26.2` branch. Fabric and Ne
 - Two enchanted chests placed together look like a double chest and share a 27-slot linked inventory
 - Mixed enchanted/unenchanted neighbors do not merge
 - Linked inventory is kept in world save data, so the pair reconnects when either chest is placed back down
+- Mining both chests of a linked pair breaks the link: the shared inventory drops at the last chest mined, and both items become plain enchanted chests again
 - Grindstone removes the enchantment and breaks the link
 - Items that still have an active partner show a **Linked** tooltip
 
