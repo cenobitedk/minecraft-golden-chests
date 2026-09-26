@@ -1,10 +1,10 @@
 # Golden Chests
 
-A Minecraft **26.2** mod for Fabric and NeoForge.
+A Minecraft **26.3** mod for Fabric and NeoForge.
 
 Craft a golden chest, enchant it with Unbreaking, and link a pair so they share one inventory — even after you mine them and place them somewhere else.
 
-Development for this Minecraft version lives on the `26.2` branch. Fabric and NeoForge are built from the same branch.
+Development for this Minecraft version lives on the `26.3` branch. Fabric and NeoForge are built from the same branch.
 
 ## Features
 
