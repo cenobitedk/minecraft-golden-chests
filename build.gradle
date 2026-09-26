@@ -2,6 +2,7 @@ plugins {
     id "architectury-plugin" version "3.5-SNAPSHOT"
     id "dev.architectury.loom" version "1.17.487" apply false
     id "dev.architectury.loom-no-remap" version "1.17.487" apply false
+    id "com.diffplug.spotless" version "8.10.3" apply false
 }
 
 architectury {
@@ -35,6 +36,23 @@ configure(subprojects) {
 allprojects {
     apply plugin: "java"
     apply plugin: "maven-publish"
+    apply plugin: "com.diffplug.spotless"
+
+    spotless {
+        java {
+            target "src/*/java/**/*.java"
+            palantirJavaFormat("2.99.0")
+            removeUnusedImports()
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+        groovyGradle {
+            target "*.gradle"
+            leadingTabsToSpaces(4)
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+    }
 
     java {
         sourceCompatibility = JavaVersion.toVersion(rootProject.java_version)
