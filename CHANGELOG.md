@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Release jars are named `golden-chests-<minecraft>-<loader>-<mod version>.jar` and collected in `dist/`.
 - The mod version shown in the mods list is `<minecraft>-<loader>-<mod version>` (e.g. `26.3-fabric-1.0.0`).
 - Fabric: Fabric API is now a declared dependency, so Fabric Loader reports it as missing instead of the game crashing.
+- README lists the Fabric Loader, Fabric API, and NeoForge versions required for Minecraft 26.3.
 
 ### Fixed
 - NeoForge: the mod jar is now recognized and loaded. It was previously skipped as a Forge/legacy NeoForge mod, and its shared classes could not see Minecraft classes.
