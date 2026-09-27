@@ -87,7 +87,8 @@ public class GoldenChestBlock extends BaseEntityBlock {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         boolean enchanted = readUnbreakingLevel(context.getItemInHand(), level) > 0;
-        ChestType type = getChestTypeOnPlacement(level, pos, facing, enchanted);
+        // Enchanted chests only join once linking has run in setPlacedBy.
+        ChestType type = enchanted ? ChestType.SINGLE : getChestTypeOnPlacement(level, pos, facing, false);
         return defaultBlockState().setValue(FACING, facing).setValue(TYPE, type).setValue(ENCHANTED, enchanted);
     }
 
@@ -144,6 +145,13 @@ public class GoldenChestBlock extends BaseEntityBlock {
         boolean neighborIsCompatible = neighborState.getBlock() instanceof GoldenChestBlock
                 && neighborState.getValue(FACING) == facing
                 && neighborState.getValue(ENCHANTED) == thisEnchanted;
+
+        // Enchanted chests only join when they share a link. Link ids are not synced to
+        // clients, so the client leaves joining to the server.
+        if (neighborIsCompatible && thisEnchanted) {
+            if (level.isClientSide()) return state;
+            neighborIsCompatible = sharesLink(level, pos, neighborPos);
+        }
 
         if (direction == facing.getClockWise()) {
             // The block to our clockwise changed
@@ -234,30 +242,68 @@ public class GoldenChestBlock extends BaseEntityBlock {
                 .orElse(0);
     }
 
+    /**
+     * Links the placed chest with an adjacent enchanted chest, but only when neither is already
+     * part of a pair. A chest that still has a live link (its partner is placed elsewhere or is
+     * still an item) only reconnects with that partner, so two pairs never merge.
+     */
     private static void tryLink(Level level, BlockPos pos, GoldenChestBlockEntity chest) {
-        for (Direction dir : Direction.Plane.HORIZONTAL) {
-            BlockPos nPos = pos.relative(dir);
-            if (level.getBlockState(nPos).getBlock() instanceof GoldenChestBlock
-                    && level.getBlockEntity(nPos) instanceof GoldenChestBlockEntity neighbour) {
+        if (!(level instanceof ServerLevel sl)) return;
+        SharedChestData data = SharedChestData.get(sl);
 
-                if (!chest.isEnchanted() || !neighbour.isEnchanted()) continue; // both must be enchanted
+        if (chest.getLinkId() != null && !data.exists(chest.getLinkId())) {
+            chest.setLinkId(null);
+        }
 
-                UUID linkId = neighbour.getLinkId() != null
-                        ? neighbour.getLinkId()
-                        : chest.getLinkId() != null ? chest.getLinkId() : UUID.randomUUID();
+        if (chest.getLinkId() == null) {
+            Direction facing = level.getBlockState(pos).getValue(FACING);
+            Direction[] order = {facing.getClockWise(), facing.getCounterClockWise(), facing, facing.getOpposite()};
+            for (Direction dir : order) {
+                BlockPos nPos = pos.relative(dir);
+                if (!(level.getBlockState(nPos).getBlock() instanceof GoldenChestBlock)
+                        || !(level.getBlockEntity(nPos) instanceof GoldenChestBlockEntity neighbour)) continue;
+                if (!neighbour.isEnchanted()) continue;
+                if (neighbour.getLinkId() != null && data.exists(neighbour.getLinkId())) continue;
 
+                UUID linkId = UUID.randomUUID();
                 int sharedLevel = Math.max(chest.getUnbreakingLevel(), neighbour.getUnbreakingLevel());
+                data.getOrCreate(linkId);
                 chest.setLinkId(linkId);
                 chest.setUnbreakingLevel(sharedLevel);
                 neighbour.setLinkId(linkId);
                 neighbour.setUnbreakingLevel(sharedLevel);
+                break;
+            }
+        }
 
-                if (level instanceof ServerLevel sl) {
-                    SharedChestData.get(sl).getOrCreate(linkId);
-                }
+        connectToLinkedPartner(level, pos, chest);
+    }
+
+    /** Joins the placed chest visually with a side neighbour that shares its link. */
+    private static void connectToLinkedPartner(Level level, BlockPos pos, GoldenChestBlockEntity chest) {
+        if (chest.getLinkId() == null) return;
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof GoldenChestBlock) || state.getValue(TYPE) != ChestType.SINGLE) return;
+        Direction facing = state.getValue(FACING);
+
+        for (ChestType ownType : new ChestType[] {ChestType.LEFT, ChestType.RIGHT}) {
+            Direction dir = ownType == ChestType.LEFT ? facing.getClockWise() : facing.getCounterClockWise();
+            BlockPos nPos = pos.relative(dir);
+            BlockState nState = level.getBlockState(nPos);
+            if (isPartnerChest(nState, facing, true) && sharesLink(level, pos, nPos)) {
+                ChestType partnerType = ownType == ChestType.LEFT ? ChestType.RIGHT : ChestType.LEFT;
+                level.setBlock(nPos, nState.setValue(TYPE, partnerType), Block.UPDATE_ALL);
+                level.setBlock(pos, state.setValue(TYPE, ownType), Block.UPDATE_ALL);
                 return;
             }
         }
+    }
+
+    private static boolean sharesLink(BlockGetter level, BlockPos a, BlockPos b) {
+        return level.getBlockEntity(a) instanceof GoldenChestBlockEntity chestA
+                && level.getBlockEntity(b) instanceof GoldenChestBlockEntity chestB
+                && chestA.getLinkId() != null
+                && chestA.getLinkId().equals(chestB.getLinkId());
     }
 
     // --- Opening the chest ---

@@ -74,6 +74,15 @@ public class SharedChestData extends SavedData {
         return inventories.computeIfAbsent(linkId, k -> makeContainer());
     }
 
+    /**
+     * Returns true while the link's shared inventory exists. The inventory is only removed when
+     * the last chest of a pair is mined or grindstoned, so a chest (placed or still an item)
+     * with an existing link belongs to a pair and must not be linked to anything else.
+     */
+    public boolean exists(UUID linkId) {
+        return inventories.containsKey(linkId);
+    }
+
     public void remove(UUID linkId) {
         inventories.remove(linkId);
         setDirty();
