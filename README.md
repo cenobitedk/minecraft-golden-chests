@@ -15,6 +15,7 @@ Craft a **Golden Chest**, enchant it with Unbreaking, and link a pair so they sh
 - Two _unenchanted_ chests placed together merge into a vanilla-style 54-slot double chest
 - Two _enchanted_ chests placed together look like a double chest and share a 27-slot linked inventory
 - Mixed enchanted/unenchanted neighbors do not merge
+- A link is always a pair: a chest that is still linked (its partner is placed elsewhere or carried as an item) only reconnects with that partner, and never merges with another chest or pair
 - Linked inventory is kept in world save data, so the pair reconnects when either chest is placed back down
 - Chests that still have an active partner show a **Linked** tooltip
 - Grindstone removes the enchantment and breaks the link
