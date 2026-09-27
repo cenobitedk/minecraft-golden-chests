@@ -95,27 +95,36 @@ public class GoldenChestRenderer implements BlockEntityRenderer<GoldenChestBlock
 
         model.setupAnim(lidAngle);
         collector.submitModel(
-                model,
-                lidAngle,
-                poseStack,
-                state.lightCoords,
-                OverlayTexture.NO_OVERLAY,
-                -1,
-                sprite,
-                sprites,
-                0,
-                state.breakProgress);
+                model, lidAngle, poseStack, state.lightCoords, OverlayTexture.NO_OVERLAY, -1, sprite, sprites, 0);
 
+        // Separate glint pass (depth-equal) so the cutout holes in the double-chest textures stay transparent
         if (state.enchanted) {
-            collector.submitModel(
-                    model,
-                    lidAngle,
-                    poseStack,
-                    RenderTypes.entityGlint(),
-                    state.lightCoords,
-                    OverlayTexture.NO_OVERLAY,
-                    -1,
-                    state.breakProgress);
+            collector
+                    .order(1)
+                    .submitModel(
+                            model,
+                            lidAngle,
+                            poseStack,
+                            RenderTypes.patternedShieldGlint(),
+                            state.lightCoords,
+                            OverlayTexture.NO_OVERLAY,
+                            -1,
+                            sprites.get(sprite),
+                            0);
+        }
+
+        if (state.breakProgress != null) {
+            collector
+                    .order(1)
+                    .submitCrumblingOverlay(
+                            model,
+                            lidAngle,
+                            poseStack,
+                            sprite.renderType(model.renderType()),
+                            state.lightCoords,
+                            OverlayTexture.NO_OVERLAY,
+                            -1,
+                            state.breakProgress);
         }
 
         poseStack.popPose();
