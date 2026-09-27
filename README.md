@@ -28,6 +28,15 @@ Craft a **Golden Chest**, enchant it with Unbreaking, and link a pair so they sh
 
 - Fabric API is needed
 
+## Client / Server
+
+Golden Chests adds a new block and item, so it must be installed on **both** the client and the server. Use the JAR that matches your loader (Fabric or NeoForge) on each side.
+
+- **Singleplayer / local worlds:** install the mod (plus Fabric API on Fabric) in your client's `mods` folder. The integrated server runs the mod for you, including LAN worlds you open to others. Anyone joining a LAN world also needs the mod installed.
+- **Dedicated server:** put the mod (plus Fabric API on Fabric) in the server's `mods` folder. Every player who joins must also have the same mod version installed on their client. Players without it cannot connect.
+
+Linked chest inventories are stored in the world save, so they are kept on the server (or in your singleplayer world) and are not tied to any one client.
+
 ## Building
 
 Requires **Java 25**.
@@ -36,7 +45,7 @@ Requires **Java 25**.
 ./gradlew :fabric:build :neoforge:build
 ```
 
-Release JARs are copied to `dist/` at the repository root, named `golden-chests-<minecraft>-<loader>-<mod version>.jar`, e.g. `golden-chests-26.2-fabric-1.0.0.jar`. The versions come from `gradle.properties`. On non-version-line branches (anything other than `26.2`, `26.3`, …), the short commit SHA is appended to the file name (e.g. `golden-chests-26.2-fabric-1.0.0-a1b2c3d.jar`); the version in the mod metadata is `<minecraft>-<loader>-<mod version>` (e.g. `26.2-fabric-1.0.0`), without the SHA. `./gradlew clean` empties `dist/`. Architectury is used as a build tool only; players do not need a second mod installed.
+Release JARs are copied to `dist/` at the repository root, named `golden-chests-<minecraft>-<loader>-<mod version>.jar`, e.g. `golden-chests-26.2-fabric-1.0.0.jar`. The versions come from `gradle.properties`. On non-version-line branches (anything other than `26.2`, `26.3`, …), the short commit SHA is appended to the file name (e.g. `golden-chests-26.2-fabric-1.0.0-a1b2c3d.jar`); the version in the mod metadata is `<minecraft>-<loader>-<mod version>` (e.g. `26.2-fabric-1.0.0`), without the SHA. Each build replaces that loader's previous jar in `dist/`, so it holds only the latest Fabric and NeoForge jars. `./gradlew clean` empties `dist/`. Architectury is used as a build tool only; players do not need a second mod installed.
 
 ## Checks
 
