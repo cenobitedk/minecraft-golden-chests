@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Enchantment glint on the chest and its item is rendered with the 26.3 glint render type.
 - Block breaking animation on the chest uses the 26.3 crumbling overlay pipeline.
 - Release jars are named `golden-chests-<minecraft>-<loader>-<mod version>.jar` and collected in `dist/`.
+- The mod version shown in the mods list is `<minecraft>-<loader>-<mod version>` (e.g. `26.3-fabric-1.0.0`).
 - Fabric: Fabric API is now a declared dependency, so Fabric Loader reports it as missing instead of the game crashing.
 
 ### Fixed
