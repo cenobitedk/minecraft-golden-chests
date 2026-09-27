@@ -5,13 +5,37 @@ architectury {
 
 loom {
     neoForge {}
+
+    mods {
+        main {
+            sourceSet sourceSets.main
+            sourceSet project(":common").sourceSets.main
+        }
+    }
+}
+
+configurations {
+    // Dev runs load common from its source set via loom.mods; a second copy on the runtime classpath
+    // would split the mod's packages across two modules.
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileOnly.extendsFrom common
+    testImplementation.extendsFrom common
+
+    // FML loads jar-in-jar libraries outside the mod's module, so common must be merged into the mod jar itself.
+    bundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
 }
 
 dependencies {
     neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
 
-    implementation project(":common")
-    include project(":common")
+    common(project(path: ":common", configuration: "namedElements")) { transitive = false }
+    bundle(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }
 }
 
 version = rootProject.mod_version
@@ -24,6 +48,10 @@ processResources {
 }
 
 tasks.jar {
+    dependsOn configurations.bundle
+    from({ configurations.bundle.collect { zipTree(it) } }) {
+        exclude "META-INF/MANIFEST.MF"
+    }
     manifest {
         attributes "Specification-Title": "golden_chests"
         attributes "Specification-Vendor": "Jeppe Hasseriis"
