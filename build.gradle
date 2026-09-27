@@ -39,14 +39,14 @@ configure(subprojects) {
         }
         testLogging {
             events "failed", "skipped"
-            exceptionFormat "full"
+            exceptionFormat = "full"
         }
     }
 
     repositories {
-        maven { url "https://maven.fabricmc.net/" }
-        maven { url "https://maven.architectury.dev/" }
-        maven { url "https://maven.neoforged.net/releases/" }
+        maven { url = "https://maven.fabricmc.net/" }
+        maven { url = "https://maven.architectury.dev/" }
+        maven { url = "https://maven.neoforged.net/releases/" }
     }
 }
 
@@ -83,22 +83,66 @@ allprojects {
 
 def distDir = layout.projectDirectory.dir("dist")
 
-configure(subprojects.findAll { it.name in ["fabric", "neoforge"] }) {
-    def loaderVersion = project.name == "fabric" ? rootProject.fabric_loader_version : rootProject.neoforge_version
+// Version-line branches (26.2, 26.3, …) keep a stable jar name.
+// Feature / PR / detached builds append the short commit SHA to the file name only
+// (mod metadata still uses mod_version from gradle.properties).
+def isVersionLineBranch = { String name -> name ==~ /^\d+\.\d+(\.\d+)?$/ }
 
-    // golden-chests-<mc>-<loader>-<loader version>-<mod version>.jar
+def runGit = { String... args ->
+    def pb = new ProcessBuilder(["git", *args])
+    pb.directory(rootProject.projectDir)
+    pb.redirectErrorStream(true)
+    def proc = pb.start()
+    def out = proc.inputStream.text.trim()
+    proc.waitFor() == 0 ? out : ""
+}
+
+def resolveRefName = {
+    def fromEnv = System.getenv("GITHUB_REF_NAME")
+    if (fromEnv) {
+        return fromEnv
+    }
+    def branch = runGit("rev-parse", "--abbrev-ref", "HEAD")
+    return branch ?: "HEAD"
+}
+
+def resolveShortSha = {
+    def fromEnv = System.getenv("GITHUB_SHA")
+    if (fromEnv) {
+        return fromEnv.substring(0, Math.min(7, fromEnv.length()))
+    }
+    def sha = runGit("rev-parse", "--short", "HEAD")
+    return sha ?: "unknown"
+}
+
+ext.jar_mod_version = isVersionLineBranch(resolveRefName())
+        ? mod_version.toString()
+        : "${mod_version}-${resolveShortSha()}"
+
+configure(subprojects.findAll { it.name in ["fabric", "neoforge"] }) {
+    // golden-chests-<mc>-<loader>-<mod version>[-<sha>].jar
     base {
-        archivesName = "${rootProject.archives_base_name}-${rootProject.minecraft_version}-${project.name}-${loaderVersion}"
+        archivesName = "${rootProject.archives_base_name}-${rootProject.minecraft_version}-${project.name}"
+    }
+
+    tasks.withType(AbstractArchiveTask).configureEach {
+        archiveVersion = rootProject.jar_mod_version
     }
 
     // Fabric's distributable jar is produced by remapJar; NeoForge (no-remap) ships the plain jar.
     def releaseJar = tasks.names.contains("remapJar") ? tasks.named("remapJar") : tasks.named("jar")
 
+    def distPrefix = base.archivesName.get()
     def copyToDist = tasks.register("copyJarToDist", Copy) {
         group = "build"
-        description = "Copies the release jar into the root dist/ folder."
+        description = "Copies the release jar into the root dist/ folder, replacing this loader's older jars."
         from releaseJar
         into distDir
+        doFirst {
+            distDir.asFile.listFiles()?.findAll { it.name.startsWith("${distPrefix}-") && it.name.endsWith(".jar") }?.each {
+                it.delete()
+            }
+        }
     }
 
     tasks.named("build") {
