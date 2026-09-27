@@ -5,13 +5,37 @@ architectury {
 
 loom {
     accessWidenerPath = file("src/main/resources/golden_chests.accesswidener")
+
+    // Loom's identity remap tags dependency class tweakers as "named", so dev runs must use that namespace.
+    runs.configureEach {
+        property "fabric.runtimeMappingNamespace", "named"
+    }
+
+    // Fabric Loader only serves assets and data from mod containers, so common must join this mod.
+    mods {
+        main {
+            sourceSet sourceSets.main
+            sourceSet project(":common").sourceSets.main
+        }
+    }
+}
+
+configurations {
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    implementation.extendsFrom common
 }
 
 dependencies {
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
 
-    implementation project(":common")
+    // Non-transitive: common's modApi would otherwise put the un-remapped Fabric API jars on the
+    // dev classpath next to Loom's remapped copies, and Fabric Loader rejects their class tweakers.
+    // namedElements is the dev jar that loom.mods groups into this mod.
+    common(project(path: ":common", configuration: "namedElements")) { transitive = false }
     include project(":common")
 }
 
