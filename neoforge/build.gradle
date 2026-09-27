@@ -41,9 +41,10 @@ dependencies {
 version = rootProject.mod_version
 
 processResources {
-    inputs.property "version", project.version
+    def modVersion = project.version
+    inputs.property "version", modVersion
     filesMatching("META-INF/neoforge.mods.toml") {
-        expand "version": project.version
+        expand "version": modVersion
     }
 }
 
