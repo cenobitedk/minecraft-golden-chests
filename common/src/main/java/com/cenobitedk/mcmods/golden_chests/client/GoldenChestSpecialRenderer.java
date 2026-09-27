@@ -2,6 +2,7 @@ package com.cenobitedk.mcmods.golden_chests.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.MapCodec;
+import java.util.function.Consumer;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.object.chest.ChestModel;
 import net.minecraft.client.renderer.Sheets;
@@ -9,12 +10,9 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.special.NoDataSpecialModelRenderer;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.sprite.SpriteGetter;
 import net.minecraft.client.resources.model.sprite.SpriteId;
 import net.minecraft.resources.Identifier;
-
-import java.util.function.Consumer;
 
 /**
  * Custom special renderer for the golden chest item.
@@ -23,8 +21,8 @@ import java.util.function.Consumer;
  */
 public class GoldenChestSpecialRenderer implements NoDataSpecialModelRenderer {
 
-    private static final SpriteId SPRITE = Sheets.CHEST_MAPPER
-            .apply(Identifier.fromNamespaceAndPath("golden_chests", "golden"));
+    private static final SpriteId SPRITE =
+            Sheets.CHEST_MAPPER.apply(Identifier.fromNamespaceAndPath("golden_chests", "golden"));
 
     private final ChestModel model;
     private final SpriteGetter sprites;
@@ -35,15 +33,13 @@ public class GoldenChestSpecialRenderer implements NoDataSpecialModelRenderer {
     }
 
     @Override
-    public void submit(PoseStack poseStack, SubmitNodeCollector collector,
-                       int light, int overlay, boolean foil, int seed) {
+    public void submit(
+            PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay, boolean foil, int seed) {
         model.setupAnim(0f);
-        collector.submitModel(model, 0f, poseStack,
-                light, overlay, -1, SPRITE, sprites, seed, null);
+        collector.submitModel(model, 0f, poseStack, light, overlay, -1, SPRITE, sprites, seed, null);
         if (foil) {
             // ChestSpecialRenderer ignores foil — we fix that here with a second glint pass
-            collector.submitModel(model, 0f, poseStack,
-                    RenderTypes.glint(), light, overlay, -1, null);
+            collector.submitModel(model, 0f, poseStack, RenderTypes.glint(), light, overlay, -1, null);
         }
     }
 

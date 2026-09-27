@@ -3,6 +3,7 @@ package com.cenobitedk.mcmods.golden_chests.blockentity;
 import com.cenobitedk.mcmods.golden_chests.blocks.GoldenChestBlock;
 import com.cenobitedk.mcmods.golden_chests.registry.ModBlockEntityTypes;
 import com.cenobitedk.mcmods.golden_chests.storage.SharedChestData;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -11,8 +12,11 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ContainerUser;
@@ -31,24 +35,31 @@ import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-
-import java.util.UUID;
 
 public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider, LidBlockEntity {
 
     private int unbreakingLevel = 0;
     private UUID linkId = null;
+    private UUID registeredRef = null;
+    private ServerLevel registeredRefLevel = null;
 
     private final ChestLidController lidController = new ChestLidController();
 
     // Permanent local container — the single source of truth for unlinked chests.
     // Using a stable field avoids all sync issues from creating new instances per call.
     private final SimpleContainer localContainer = new SimpleContainer(SharedChestData.CHEST_SIZE) {
-        @Override public void startOpen(ContainerUser user) { GoldenChestBlockEntity.this.startOpen(user); }
-        @Override public void stopOpen(ContainerUser user)  { GoldenChestBlockEntity.this.stopOpen(user); }
-        @Override public void setChanged() {
+        @Override
+        public void startOpen(ContainerUser user) {
+            GoldenChestBlockEntity.this.startOpen(user);
+        }
+
+        @Override
+        public void stopOpen(ContainerUser user) {
+            GoldenChestBlockEntity.this.stopOpen(user);
+        }
+
+        @Override
+        public void setChanged() {
             super.setChanged();
             GoldenChestBlockEntity.this.setChanged();
         }
@@ -57,13 +68,23 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
     private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter() {
         @Override
         protected void onOpen(Level level, BlockPos pos, BlockState state) {
-            level.playSound(null, pos, SoundEvents.CHEST_OPEN, SoundSource.BLOCKS, 0.5f,
+            level.playSound(
+                    null,
+                    pos,
+                    SoundEvents.CHEST_OPEN,
+                    SoundSource.BLOCKS,
+                    0.5f,
                     level.getRandom().nextFloat() * 0.1f + 0.9f);
         }
 
         @Override
         protected void onClose(Level level, BlockPos pos, BlockState state) {
-            level.playSound(null, pos, SoundEvents.CHEST_CLOSE, SoundSource.BLOCKS, 0.5f,
+            level.playSound(
+                    null,
+                    pos,
+                    SoundEvents.CHEST_CLOSE,
+                    SoundSource.BLOCKS,
+                    0.5f,
                     level.getRandom().nextFloat() * 0.1f + 0.9f);
         }
 
@@ -73,9 +94,8 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
             // If we're part of a double chest, keep the partner's lid in sync.
             if (state.hasProperty(GoldenChestBlock.TYPE)
                     && state.getValue(GoldenChestBlock.TYPE)
-                       != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
-                net.minecraft.core.Direction partnerDir =
-                    GoldenChestBlock.getConnectedDirection(state);
+                            != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
+                net.minecraft.core.Direction partnerDir = GoldenChestBlock.getConnectedDirection(state);
                 level.blockEvent(pos.relative(partnerDir), state.getBlock(), 1, newCount);
             }
         }
@@ -99,13 +119,19 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
         be.lidController.tickLid();
     }
 
-    @Override public float getOpenNess(float partialTick)  { return lidController.getOpenness(partialTick); }
-    public         float getOpenness(float partialTick)    { return lidController.getOpenness(partialTick); }
+    @Override
+    public float getOpenNess(float partialTick) {
+        return lidController.getOpenness(partialTick);
+    }
+
+    public float getOpenness(float partialTick) {
+        return lidController.getOpenness(partialTick);
+    }
 
     public void startOpen(ContainerUser user) {
         if (!isRemoved() && level != null)
-            openersCounter.incrementOpeners(user.getLivingEntity(), level, getBlockPos(), getBlockState(),
-                    user.getContainerInteractionRange());
+            openersCounter.incrementOpeners(
+                    user.getLivingEntity(), level, getBlockPos(), getBlockState(), user.getContainerInteractionRange());
     }
 
     public void stopOpen(ContainerUser user) {
@@ -115,32 +141,58 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
 
     @Override
     public boolean triggerEvent(int type, int data) {
-        if (type == 1) { lidController.shouldBeOpen(data > 0); return true; }
+        if (type == 1) {
+            lidController.shouldBeOpen(data > 0);
+            return true;
+        }
         return super.triggerEvent(type, data);
     }
 
     // --- Level lifecycle (ref counting) ---
 
+    // Chunk loading calls loadAdditional before setLevel, while placement from an item calls
+    // setLevel first, so every hook re-syncs and the ref follows whichever state is current.
     @Override
     public void setLevel(Level level) {
         super.setLevel(level);
-        // setLevel fires BEFORE loadAdditional, so linkId is always null here.
-        // Ref registration is done in loadAdditional once linkId is known.
+        syncRef();
     }
 
     @Override
     public void setRemoved() {
-        // Decrement ref before calling super so level is still set
-        if (linkId != null && level instanceof ServerLevel sl) {
-            SharedChestData.get(sl).removeRef(linkId);
-        }
         super.setRemoved();
+        syncRef();
+    }
+
+    @Override
+    public void clearRemoved() {
+        super.clearRemoved();
+        syncRef();
+    }
+
+    /** Keeps exactly one ref registered for linkId while this chest is live in a server level. */
+    private void syncRef() {
+        UUID wanted = !isRemoved() && level instanceof ServerLevel ? linkId : null;
+        if (java.util.Objects.equals(wanted, registeredRef)) return;
+        if (registeredRef != null && registeredRefLevel != null) {
+            SharedChestData.get(registeredRefLevel).removeRef(registeredRef);
+        }
+        registeredRef = wanted;
+        registeredRefLevel = wanted != null ? (ServerLevel) level : null;
+        if (wanted != null) {
+            SharedChestData.get(registeredRefLevel).addRef(wanted);
+        }
     }
 
     // --- Enchantment & linking state ---
 
-    public boolean isEnchanted() { return unbreakingLevel > 0; }
-    public int  getUnbreakingLevel() { return unbreakingLevel; }
+    public boolean isEnchanted() {
+        return unbreakingLevel > 0;
+    }
+
+    public int getUnbreakingLevel() {
+        return unbreakingLevel;
+    }
 
     public void setUnbreakingLevel(int level) {
         this.unbreakingLevel = level;
@@ -153,9 +205,8 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
             boolean enchanted = level > 0;
             if (state.hasProperty(GoldenChestBlock.ENCHANTED)
                     && state.getValue(GoldenChestBlock.ENCHANTED) != enchanted) {
-                this.level.setBlock(getBlockPos(),
-                        state.setValue(GoldenChestBlock.ENCHANTED, enchanted),
-                        Block.UPDATE_ALL);
+                this.level.setBlock(
+                        getBlockPos(), state.setValue(GoldenChestBlock.ENCHANTED, enchanted), Block.UPDATE_ALL);
             }
         }
     }
@@ -174,25 +225,55 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
         return tag;
     }
 
-    public UUID getLinkId() { return linkId; }
+    public UUID getLinkId() {
+        return linkId;
+    }
 
     public void setLinkId(UUID id) {
         UUID oldLinkId = this.linkId;
-        this.linkId = id;
-        setChanged();
-
-        // Maintain ref counts when linkId changes
-        if (level instanceof ServerLevel sl) {
-            if (oldLinkId != null && !oldLinkId.equals(id)) {
-                SharedChestData.get(sl).removeRef(oldLinkId);
-            }
-            if (id != null && !id.equals(oldLinkId)) {
-                SharedChestData.get(sl).addRef(id);
+        if (id != null && !id.equals(oldLinkId) && level instanceof ServerLevel sl) {
+            // Carry existing contents into the shared inventory; otherwise they would be
+            // orphaned (local items are not saved while linked, and an old shared inventory
+            // with no other chest referencing it becomes unreachable).
+            SharedChestData data = SharedChestData.get(sl);
+            SimpleContainer target = data.getOrCreate(id);
+            if (oldLinkId == null) {
+                moveContents(localContainer, target);
+            } else {
+                boolean othersReferenceOld =
+                        oldLinkId.equals(registeredRef) ? data.hasOtherRefs(oldLinkId) : data.hasActiveRefs(oldLinkId);
+                if (!othersReferenceOld) {
+                    moveContents(data.getOrCreate(oldLinkId), target);
+                    data.remove(oldLinkId);
+                }
             }
         }
+        this.linkId = id;
+        setChanged();
+        syncRef();
     }
 
-    public boolean isLinked() { return linkId != null; }
+    /** Moves all items from {@code source} into {@code target}, dropping anything that does not fit. */
+    private void moveContents(SimpleContainer source, SimpleContainer target) {
+        for (int i = 0; i < source.getContainerSize(); i++) {
+            ItemStack stack = source.removeItemNoUpdate(i);
+            if (stack.isEmpty()) continue;
+            if (i < target.getContainerSize() && target.getItem(i).isEmpty()) {
+                target.setItem(i, stack);
+                continue;
+            }
+            ItemStack remainder = target.addItem(stack);
+            if (!remainder.isEmpty() && level != null) {
+                BlockPos pos = getBlockPos();
+                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), remainder);
+            }
+        }
+        source.setChanged();
+    }
+
+    public boolean isLinked() {
+        return linkId != null;
+    }
 
     // --- Inventory ---
 
@@ -216,17 +297,60 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
         // Wrap so startOpen/stopOpen always reach this BE's ContainerOpenersCounter,
         // even when inner is a shared (SharedChestData) container.
         Container decorated = new Container() {
-            @Override public int getContainerSize()                    { return inner.getContainerSize(); }
-            @Override public boolean isEmpty()                         { return inner.isEmpty(); }
-            @Override public ItemStack getItem(int s)                  { return inner.getItem(s); }
-            @Override public ItemStack removeItem(int s, int c)        { return inner.removeItem(s, c); }
-            @Override public ItemStack removeItemNoUpdate(int s)       { return inner.removeItemNoUpdate(s); }
-            @Override public void setItem(int s, ItemStack st)        { inner.setItem(s, st); }
-            @Override public void setChanged()                         { inner.setChanged(); }
-            @Override public boolean stillValid(Player p)              { return inner.stillValid(p); }
-            @Override public void clearContent()                       { inner.clearContent(); }
-            @Override public void startOpen(ContainerUser u)  { GoldenChestBlockEntity.this.startOpen(u); }
-            @Override public void stopOpen(ContainerUser u)   { GoldenChestBlockEntity.this.stopOpen(u); }
+            @Override
+            public int getContainerSize() {
+                return inner.getContainerSize();
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return inner.isEmpty();
+            }
+
+            @Override
+            public ItemStack getItem(int s) {
+                return inner.getItem(s);
+            }
+
+            @Override
+            public ItemStack removeItem(int s, int c) {
+                return inner.removeItem(s, c);
+            }
+
+            @Override
+            public ItemStack removeItemNoUpdate(int s) {
+                return inner.removeItemNoUpdate(s);
+            }
+
+            @Override
+            public void setItem(int s, ItemStack st) {
+                inner.setItem(s, st);
+            }
+
+            @Override
+            public void setChanged() {
+                inner.setChanged();
+            }
+
+            @Override
+            public boolean stillValid(Player p) {
+                return inner.stillValid(p);
+            }
+
+            @Override
+            public void clearContent() {
+                inner.clearContent();
+            }
+
+            @Override
+            public void startOpen(ContainerUser u) {
+                GoldenChestBlockEntity.this.startOpen(u);
+            }
+
+            @Override
+            public void stopOpen(ContainerUser u) {
+                GoldenChestBlockEntity.this.stopOpen(u);
+            }
         };
         return new ChestMenu(MenuType.GENERIC_9x3, windowId, playerInventory, decorated, 3);
     }
@@ -248,12 +372,8 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         unbreakingLevel = input.getIntOr("unbreaking_level", 0);
-        input.getString("link_id").ifPresent(s -> linkId = UUID.fromString(s));
-        // Register ref now that linkId is known. setLevel() already fired (it always fires before
-        // loadAdditional) with linkId==null, so this is the correct place to call addRef.
-        if (linkId != null && level instanceof ServerLevel sl) {
-            SharedChestData.get(sl).addRef(linkId);
-        }
+        linkId = input.getString("link_id").map(UUID::fromString).orElse(null);
+        syncRef();
         if (linkId == null) {
             var items = net.minecraft.core.NonNullList.withSize(SharedChestData.CHEST_SIZE, ItemStack.EMPTY);
             ContainerHelper.loadAllItems(input, items);

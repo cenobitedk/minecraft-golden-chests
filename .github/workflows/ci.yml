@@ -1,0 +1,131 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: "25"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Check formatting
+        run: ./gradlew spotlessCheck
+      - name: How to fix
+        if: failure()
+        run: echo "::error::Formatting check failed. Run './gradlew spotlessApply' locally and commit the result."
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Run tests
+        run: ./gradlew test
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: |
+            */build/reports/tests/
+            */build/test-results/
+          retention-days: 7
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Build mod jars
+        run: ./gradlew :fabric:assemble :neoforge:assemble
+      - name: Verify jars
+        run: |
+          set -euo pipefail
+          prop() { sed -n "s/^$1=//p" gradle.properties; }
+          prefix="$(prop archives_base_name)-$(prop minecraft_version)"
+          version=$(prop mod_version)
+          ref="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
+          if [[ "$ref" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            jar_version="$version"
+          elif [[ -n "${GITHUB_SHA:-}" ]]; then
+            jar_version="${version}-${GITHUB_SHA:0:7}"
+          else
+            jar_version="${version}-$(git rev-parse --short HEAD)"
+          fi
+          check() {
+            local jar="$1"; shift
+            test -f "$jar" || { echo "::error::Missing $jar"; exit 1; }
+            for entry in "$@"; do
+              unzip -l "$jar" "$entry" > /dev/null || { echo "::error::$jar is missing $entry"; exit 1; }
+            done
+          }
+          check "fabric/build/libs/${prefix}-fabric-${jar_version}.jar" fabric.mod.json
+          check "neoforge/build/libs/${prefix}-neoforge-${jar_version}.jar" META-INF/neoforge.mods.toml \
+            com/cenobitedk/mcmods/golden_chests/blocks/GoldenChestBlock.class \
+            assets/golden_chests/lang/en_us.json
+          ls -l fabric/build/libs neoforge/build/libs
+      - name: Upload jars
+        uses: actions/upload-artifact@v7
+        with:
+          name: golden-chests-jars
+          path: |
+            fabric/build/libs/*.jar
+            neoforge/build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+  workflow-lint:
+    name: Lint workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run actionlint
+        run: |
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash) 1.7.12
+          ./actionlint -color
+
+  ci-success:
+    name: CI success
+    if: always()
+    needs: [lint, test, build, workflow-lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require all jobs to succeed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1
