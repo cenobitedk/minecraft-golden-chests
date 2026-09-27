@@ -38,7 +38,7 @@ dependencies {
     bundle(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }
 }
 
-version = rootProject.mod_version
+version = "${rootProject.minecraft_version}-${project.name}-${rootProject.mod_version}"
 
 processResources {
     def modVersion = project.version
