@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - NeoForge: the golden chest item renders correctly and the block has the same strength as on Fabric.
 - Linked chests re-register with their shared inventory after a world reload or chunk reload.
 - Items already in a chest are kept when it links with another enchanted chest.
+- Placing a chest from one linked pair next to a chest from another pair no longer merges the two pairs. A chest that still belongs to a pair only reconnects with its own partner, and enchanted chests only join visually when they share a link.
 
 ## [1.0.0] - Minecraft 26.2
 
