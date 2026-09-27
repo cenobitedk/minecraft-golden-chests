@@ -39,6 +39,8 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
 
     private int unbreakingLevel = 0;
     private UUID linkId = null;
+    private UUID registeredRef = null;
+    private ServerLevel registeredRefLevel = null;
 
     private final ChestLidController lidController = new ChestLidController();
 
@@ -147,20 +149,38 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
 
     // --- Level lifecycle (ref counting) ---
 
+    // Chunk loading calls loadAdditional before setLevel, while placement from an item calls
+    // setLevel first, so every hook re-syncs and the ref follows whichever state is current.
     @Override
     public void setLevel(Level level) {
         super.setLevel(level);
-        // setLevel fires BEFORE loadAdditional, so linkId is always null here.
-        // Ref registration is done in loadAdditional once linkId is known.
+        syncRef();
     }
 
     @Override
     public void setRemoved() {
-        // Decrement ref before calling super so level is still set
-        if (linkId != null && level instanceof ServerLevel sl) {
-            SharedChestData.get(sl).removeRef(linkId);
-        }
         super.setRemoved();
+        syncRef();
+    }
+
+    @Override
+    public void clearRemoved() {
+        super.clearRemoved();
+        syncRef();
+    }
+
+    /** Keeps exactly one ref registered for linkId while this chest is live in a server level. */
+    private void syncRef() {
+        UUID wanted = !isRemoved() && level instanceof ServerLevel ? linkId : null;
+        if (java.util.Objects.equals(wanted, registeredRef)) return;
+        if (registeredRef != null && registeredRefLevel != null) {
+            SharedChestData.get(registeredRefLevel).removeRef(registeredRef);
+        }
+        registeredRef = wanted;
+        registeredRefLevel = wanted != null ? (ServerLevel) level : null;
+        if (wanted != null) {
+            SharedChestData.get(registeredRefLevel).addRef(wanted);
+        }
     }
 
     // --- Enchantment & linking state ---
@@ -209,19 +229,9 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
     }
 
     public void setLinkId(UUID id) {
-        UUID oldLinkId = this.linkId;
         this.linkId = id;
         setChanged();
-
-        // Maintain ref counts when linkId changes
-        if (level instanceof ServerLevel sl) {
-            if (oldLinkId != null && !oldLinkId.equals(id)) {
-                SharedChestData.get(sl).removeRef(oldLinkId);
-            }
-            if (id != null && !id.equals(oldLinkId)) {
-                SharedChestData.get(sl).addRef(id);
-            }
-        }
+        syncRef();
     }
 
     public boolean isLinked() {
@@ -325,12 +335,8 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         unbreakingLevel = input.getIntOr("unbreaking_level", 0);
-        input.getString("link_id").ifPresent(s -> linkId = UUID.fromString(s));
-        // Register ref now that linkId is known. setLevel() already fired (it always fires before
-        // loadAdditional) with linkId==null, so this is the correct place to call addRef.
-        if (linkId != null && level instanceof ServerLevel sl) {
-            SharedChestData.get(sl).addRef(linkId);
-        }
+        linkId = input.getString("link_id").map(UUID::fromString).orElse(null);
+        syncRef();
         if (linkId == null) {
             var items = net.minecraft.core.NonNullList.withSize(SharedChestData.CHEST_SIZE, ItemStack.EMPTY);
             ContainerHelper.loadAllItems(input, items);
