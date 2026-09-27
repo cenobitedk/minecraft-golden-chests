@@ -27,7 +27,10 @@ Craft a **Golden Chest**, enchant it with Unbreaking, and link a pair so they sh
 
 ## Requirements
 
-- Fabric API is needed
+- Minecraft 26.2
+- Java 25 or newer
+- **Fabric:** Fabric Loader 0.19.3 or newer and [Fabric API](https://modrinth.com/mod/fabric-api) 0.152.1 or newer (required; the mod will not load without it)
+- **NeoForge:** NeoForge for 26.2; no other mods are needed
 
 ## Client / Server
 
