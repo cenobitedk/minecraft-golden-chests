@@ -14,7 +14,7 @@ dependencies {
     include project(":common")
 }
 
-version = rootProject.mod_version
+version = "${rootProject.minecraft_version}-${project.name}-${rootProject.mod_version}"
 
 processResources {
     inputs.property "version", project.version

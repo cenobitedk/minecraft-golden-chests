@@ -36,7 +36,9 @@ class FabricModMetadataTest {
 
     @Test
     void versionIsExpandedFromGradle() {
-        assertEquals(property("mod_version"), metadata.get("version").getAsString());
+        assertEquals(
+                property("minecraft_version") + "-fabric-" + property("mod_version"),
+                metadata.get("version").getAsString());
     }
 
     @Test
