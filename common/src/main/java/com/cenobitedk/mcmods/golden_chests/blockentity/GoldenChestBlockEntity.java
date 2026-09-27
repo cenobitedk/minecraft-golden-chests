@@ -16,6 +16,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.ContainerUser;
@@ -229,9 +230,45 @@ public class GoldenChestBlockEntity extends BlockEntity implements MenuProvider,
     }
 
     public void setLinkId(UUID id) {
+        UUID oldLinkId = this.linkId;
+        if (id != null && !id.equals(oldLinkId) && level instanceof ServerLevel sl) {
+            // Carry existing contents into the shared inventory; otherwise they would be
+            // orphaned (local items are not saved while linked, and an old shared inventory
+            // with no other chest referencing it becomes unreachable).
+            SharedChestData data = SharedChestData.get(sl);
+            SimpleContainer target = data.getOrCreate(id);
+            if (oldLinkId == null) {
+                moveContents(localContainer, target);
+            } else {
+                boolean othersReferenceOld =
+                        oldLinkId.equals(registeredRef) ? data.hasOtherRefs(oldLinkId) : data.hasActiveRefs(oldLinkId);
+                if (!othersReferenceOld) {
+                    moveContents(data.getOrCreate(oldLinkId), target);
+                    data.remove(oldLinkId);
+                }
+            }
+        }
         this.linkId = id;
         setChanged();
         syncRef();
+    }
+
+    /** Moves all items from {@code source} into {@code target}, dropping anything that does not fit. */
+    private void moveContents(SimpleContainer source, SimpleContainer target) {
+        for (int i = 0; i < source.getContainerSize(); i++) {
+            ItemStack stack = source.removeItemNoUpdate(i);
+            if (stack.isEmpty()) continue;
+            if (i < target.getContainerSize() && target.getItem(i).isEmpty()) {
+                target.setItem(i, stack);
+                continue;
+            }
+            ItemStack remainder = target.addItem(stack);
+            if (!remainder.isEmpty() && level != null) {
+                BlockPos pos = getBlockPos();
+                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), remainder);
+            }
+        }
+        source.setChanged();
     }
 
     public boolean isLinked() {
