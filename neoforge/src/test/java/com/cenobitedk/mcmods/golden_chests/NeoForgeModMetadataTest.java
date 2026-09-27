@@ -47,7 +47,10 @@ class NeoForgeModMetadataTest {
     void modEntryMatchesGradleProperties() {
         Config mod = onlyMod();
         assertEquals(GoldenChestsMod.MOD_ID, mod.get("modId"));
-        assertEquals(System.getProperty("golden_chests.mod_version"), mod.get("version"));
+        assertEquals(
+                System.getProperty("golden_chests.minecraft_version") + "-neoforge-"
+                        + System.getProperty("golden_chests.mod_version"),
+                mod.get("version"));
     }
 
     @Test
