@@ -2,7 +2,7 @@ plugins {
     id "architectury-plugin" version "3.5-SNAPSHOT"
     id "dev.architectury.loom" version "1.17.487" apply false
     id "dev.architectury.loom-no-remap" version "1.17.487" apply false
-    id "com.diffplug.spotless" version "8.10.3" apply false
+    id "com.diffplug.spotless" version "8.10.4" apply false
 }
 
 architectury {
